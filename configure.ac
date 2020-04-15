@@ -60,6 +60,7 @@ AC_ARG_ENABLE([mpi],
               [AS_HELP_STRING([--disable-mpi],[do not compile with MPI])],
               [],
               [enable_mpi=yes])
+AM_CONDITIONAL([USE_MPI], [test "$enable_mpi" = "yes"])
 if test "$enable_mpi" = "yes"; then
   AX_MPI([],[AC_MSG_ERROR([could not find mpi library for --enable-mpi])])
   AC_CHECK_PROG(MPIRUN, mpirun, mpirun)

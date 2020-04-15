@@ -645,6 +645,8 @@ SIMD_FLAGS
 MPIRUN
 MPILIBS
 MPICXX
+USE_MPI_FALSE
+USE_MPI_TRUE
 OPENMP_CXXFLAGS
 USE_FLOAT_FALSE
 USE_FLOAT_TRUE
@@ -19916,6 +19918,14 @@ else
   enable_mpi=yes
 fi
 
+ if test "$enable_mpi" = "yes"; then
+  USE_MPI_TRUE=
+  USE_MPI_FALSE='#'
+else
+  USE_MPI_TRUE='#'
+  USE_MPI_FALSE=
+fi
+
 if test "$enable_mpi" = "yes"; then
 
 
@@ -23597,6 +23607,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${USE_FLOAT_TRUE}" && test -z "${USE_FLOAT_FALSE}"; then
   as_fn_error $? "conditional \"USE_FLOAT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${USE_MPI_TRUE}" && test -z "${USE_MPI_FALSE}"; then
+  as_fn_error $? "conditional \"USE_MPI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

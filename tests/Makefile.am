@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile.am.include
 
-COMMON_SRCS = ../src/geometry.cpp ../src/timer.cpp
+COMMON_SRCS = 
 bin_PROGRAMS = 
 
 # simd p2p tests
@@ -69,5 +69,13 @@ fmm_modified_helmholtz_LDADD = $(LIBS_LDADD)
 fmm_modified_helmholtz_non_adaptive_SOURCES = $(fmm_modified_helmholtz_SOURCES)
 fmm_modified_helmholtz_non_adaptive_CPPFLAGS = -DNON_ADAPTIVE $(fmm_modified_helmholtz_CPPFLAGS)
 fmm_modified_helmholtz_non_adaptive_LDADD = $(fmm_modified_helmholtz_LDADD)
+
+# MPI tests
+if USE_MPI
+bin_PROGRAMS += partition
+partition_SOURCES = partition.cpp $(COMMON_SRCS)
+partition_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
+partition_LDADD = $(LIBS_LDADD)
+endif
 
 TESTS = $(bin_PROGRAMS)
