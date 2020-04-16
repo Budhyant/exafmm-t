@@ -1,5 +1,6 @@
 #ifndef dataset_h
 #define dataset_h
+#include <fstream>
 #include "exafmm_t.h"
 
 namespace exafmm_t {
@@ -141,5 +142,18 @@ namespace exafmm_t {
     }
     return bodies;
   }
+
+  //! Write bodies to file
+  template <typename T>
+  void writeBodies(Bodies<T> & bodies) {
+    std::stringstream name;
+    name << "bodies" << std::setfill('0') << std::setw(4) << MPIRANK << ".dat";
+    std::ofstream file(name.str().c_str());
+    for (size_t b=0; b<bodies.size(); b++) {
+      file << bodies[b].X << std::endl;
+    }
+    file.close();
+  }
+
 }
 #endif

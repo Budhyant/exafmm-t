@@ -19,7 +19,11 @@ int main(int argc, char **argv) {
   std::vector<int> src_offset;
   partition(sources, x0, r0, src_offset, args.maxlevel);
   partition(targets, x0, r0, trg_offset, args.maxlevel);
-  std::cout << "sources size " << sources.size() << " from proc " << MPIRANK << std::endl;
+  std::cout << " sources size " << sources.size() 
+            << " targets size " << targets.size()
+            << " from proc " << MPIRANK << std::endl;
+
+  writeBodies(sources);
 
   stopMPI();
 
