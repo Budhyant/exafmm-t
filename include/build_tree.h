@@ -1,5 +1,6 @@
 #ifndef build_tree_h
 #define build_tree_h
+#include <fstream>
 #include <unordered_map>
 #include <queue>
 #include "exafmm_t.h"
@@ -350,5 +351,17 @@ namespace exafmm_t {
                        fmm, leaf_keys);
     fmm.depth = keys.size() - 1;
   }
+
+  template <typename T>
+  void writeNodes(Nodes<T>& nodes) {
+    std::stringstream name;
+    name << "nodes" << std::setfill('0') << std::setw(4) << MPIRANK << ".dat";
+    std::ofstream file(name.str().c_str());
+    for (size_t i=0; i<nodes.size(); i++) {
+      file << nodes[i].x << nodes[i].r << " " << (int)(nodes[i].is_leaf) << std::endl;
+    }
+    file.close();
+  }
+
 }
 #endif

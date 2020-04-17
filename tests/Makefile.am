@@ -76,6 +76,11 @@ bin_PROGRAMS += partition
 partition_SOURCES = partition.cpp $(COMMON_SRCS)
 partition_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 partition_LDADD = $(LIBS_LDADD)
+
+bin_PROGRAMS += let
+let_SOURCES = let.cpp
+let_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
+let_LDADD = $(LIBS_LDADD)
 endif
 
 TESTS = $(bin_PROGRAMS)

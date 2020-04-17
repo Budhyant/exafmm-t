@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <stdint.h>
 #include "exafmm_t.h"
-#define EXAFMM_HILBERT 0 //! Set this to 1 for Hilbert
+#define EXAFMM_HILBERT 1 //! Set this to 0 for Morton
 
 namespace exafmm_t {
   /**
