@@ -99,21 +99,30 @@ namespace exafmm_t {
   };
   template <typename T> using Bodies = std::vector<Body<T>>;     //!< Vector of nodes
 
+  // Base struct for nodes, used for MPI communications
+  struct NodeBase {
+    vec3 x;                                     //!< Coordinates of the center of the node
+    real_t r;                                   //!< Radius of the node
+    uint64_t key;                               //!< Morton key
+    bool is_leaf;                               //!< Whether the node is leaf
+    int nsrcs;                                  //!< Number of sources
+  };
+
   /**
    * @brief Structure of nodes.
    * 
    * @tparam Value type of sources and targets (real or complex).
    */
   template <typename T>
-  struct Node {
+  struct Node : public NodeBase {
     size_t idx;                                 //!< Index in the octree
     size_t idx_M2L;                             //!< Index in global M2L interaction list
-    bool is_leaf;                               //!< Whether the node is leaf
+    // bool is_leaf;                               //!< Whether the node is leaf
     int ntrgs;                                  //!< Number of targets
-    int nsrcs;                                  //!< Number of sources
-    vec3 x;                                     //!< Coordinates of the center of the node
-    real_t r;                                   //!< Radius of the node
-    uint64_t key;                               //!< Morton key
+    //int nsrcs;                                  //!< Number of sources
+    //vec3 x;                                     //!< Coordinates of the center of the node
+    //real_t r;                                   //!< Radius of the node
+    //uint64_t key;                               //!< Morton key
     int level;                                  //!< Level in the octree
     int octant;                                 //!< Octant
     Node* parent;                               //!< Pointer to parent

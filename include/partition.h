@@ -58,6 +58,15 @@ namespace exafmm_t {
     }
   }
 
+  /**
+   * @ brief Partition all bodies to different ranks based on their Hilbert keys. 
+   *
+   * @ param bodies Vector of bodies.
+   * @ param x0 Coordinates of the center of the global bounding box.
+   * @ param r0 Radius of the bounding box.
+   * @ param offset The Hilbert key offset for each rank, e.g., the keys of bodies in rank 1 range from offset[1] to offset[2].
+   * @ param level The level used for partition, number of bins = 8^level.
+   */
   template <typename T>
   void partition(Bodies<T> & bodies, vec3 x0, real_t r0, std::vector<int>& OFFSET, int LEVEL) {
     const int numBodies = bodies.size();

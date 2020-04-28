@@ -25,18 +25,25 @@ namespace exafmm_t {
                   &recvBodies[0], &recvBodyCount[0], &recvBodyDispl[0], MPI_BODY, MPI_COMM_WORLD);
   }
 
-/*
   //! Alltoallv for cells
-  void alltoallCells(Cells & sendCells, std::vector<int> & sendCellCount, std::vector<int> & sendCellDispl,
-                     Cells & recvCells,  std::vector<int> & recvCellCount, std::vector<int> & recvCellDispl) {
+  template <typename T>
+  void alltoallCells(Nodes<T>& sendCells, std::vector<int> & sendCellCount, std::vector<int> & sendCellDispl,
+                     Nodes<T>& recvCells, std::vector<int> & recvCellCount, std::vector<int> & recvCellDispl,
+                     FmmBase<T>& fmm) {
     //! Copy cells to cell bases, cell data
-    std::vector<CellBase> sendCellBases(sendCellDispl[MPISIZE-1]+sendCellCount[MPISIZE-1]);
-    std::vector<complex_t> sendCellData(sendCellBases.size()*NTERM);
-    for (int irank=0, ic=0, ib=0; irank<MPISIZE; irank++) {
+    std::vector<NodeBase> sendCellBases(sendCellDispl[MPISIZE-1] + sendCellCount[MPISIZE-1]);
+    size_t nsurf = sendCells[0].up_equiv.size();
+    std::vector<T> sendCellData(sendCellBases.size()*nsurf);
+
+    for (int irank=0, ic=0; irank<MPISIZE; irank++) {
       for (int i=sendCellDispl[irank]; i<sendCellDispl[irank]+sendCellCount[irank]; i++) {
-        sendCellBases[i] = sendCells[i];
-        for (int n=0; n<NTERM; n++) {
-          sendCellData[ic++] = sendCells[i].M[n];
+        sendCellBases[i].x = sendCells[i].x;
+        sendCellBases[i].r = sendCells[i].r;
+        sendCellBases[i].key = sendCells[i].key;
+        sendCellBases[i].is_leaf = sendCells[i].is_leaf;
+        sendCellBases[i].nsrcs = sendCells[i].nsrcs;
+        for (int n=0; n<nsurf; n++) {
+          sendCellData[ic++] = sendCells[i].up_equiv[n];
         }
       }
     }
@@ -44,29 +51,33 @@ namespace exafmm_t {
     MPI_Datatype MPI_CELL_BASE;
     MPI_Type_contiguous(sizeof(sendCellBases[0]), MPI_CHAR, &MPI_CELL_BASE);
     MPI_Type_commit(&MPI_CELL_BASE);
-    std::vector<CellBase> recvCellBases(recvCellDispl[MPISIZE-1]+recvCellCount[MPISIZE-1]);
+    std::vector<NodeBase> recvCellBases(recvCellDispl[MPISIZE-1]+recvCellCount[MPISIZE-1]);
     MPI_Alltoallv(&sendCellBases[0], &sendCellCount[0], &sendCellDispl[0], MPI_CELL_BASE,
                   &recvCellBases[0], &recvCellCount[0], &recvCellDispl[0], MPI_CELL_BASE, MPI_COMM_WORLD);
     //! Send cell data
     MPI_Datatype MPI_CELL_DATA;
-    MPI_Type_contiguous(sizeof(complex_t)*NTERM, MPI_CHAR, &MPI_CELL_DATA);
+    MPI_Type_contiguous(sizeof(T)*nsurf, MPI_CHAR, &MPI_CELL_DATA);
     MPI_Type_commit(&MPI_CELL_DATA);
-    std::vector<complex_t> recvCellData(recvCellBases.size()*NTERM);
+    std::vector<complex_t> recvCellData(recvCellBases.size()*nsurf);
     MPI_Alltoallv(&sendCellData[0], &sendCellCount[0], &sendCellDispl[0], MPI_CELL_DATA,
                   &recvCellData[0], &recvCellCount[0], &recvCellDispl[0], MPI_CELL_DATA, MPI_COMM_WORLD);
     //! Copy cell bases, cell data to cells
     recvCells.resize(recvCellBases.size());
     for (int irank=0, ic=0; irank<MPISIZE; irank++) {
       for (int i=recvCellDispl[irank]; i<recvCellDispl[irank]+recvCellCount[irank]; i++) {
-        recvCells[i] = recvCellBases[i];
-        recvCells[i].M.resize(NTERM, 0);
-        recvCells[i].L.resize(NTERM, 0);
-        for (int n=0; n<NTERM; n++) {
-          recvCells[i].M[n] += recvCellData[ic++];
+        recvCells[i].x = recvCellBases[i].x;
+        recvCells[i].r = recvCellBases[i].r;
+        recvCells[i].key = recvCellBases[i].key;
+        recvCells[i].is_leaf = recvCellBases[i].is_leaf;
+        recvCells[i].nsrcs = recvCellBases[i].nsrcs;
+
+        recvCells[i].up_equiv.resize(nsurf, 0);
+        // recvCells[i].L.resize(nsurf, 0);
+        for (int n=0; n<nsurf; n++) {
+          recvCells[i].up_equiv[n] += recvCellData[ic++];
         }
       }
     }
   }
-*/
 }
 #endif
