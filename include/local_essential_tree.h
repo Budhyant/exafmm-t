@@ -7,23 +7,24 @@
 #define SEND_ALL 0 //! Set to 1 for debugging
 
 namespace exafmm_t {
-  typedef std::multimap<uint64_t, Body> BodyMap;
-  typedef std::map<uint64_t, Cell> CellMap;
-  int LEVEL;                                    //!< Octree level used for partitioning
+  // typedef std::multimap<uint64_t, Body> BodyMap;
+  // typedef std::map<uint64_t, Cell> CellMap;
+  // int LEVEL;                                    //!< Octree level used for partitioning
   // std::vector<int> OFFSET;                      //!< Offset of Hilbert index for partitions
 
   //! Distance between cell center and edge of a remote domain
-  real_t getDistance(Cell * C, int irank) {
+  template <typename T>
+  real_t getDistance(Node<T>* C, int irank, std::vector<int>& OFFSET, int LEVEL, vec3 X0, real_t R0) {
     real_t distance = R0;
     real_t R = R0 / (1 << LEVEL);
     for (int key=OFFSET[irank]; key<OFFSET[irank+1]; key++) {
       ivec3 iX = get3DIndex(key, LEVEL);
-      vec3 X = getCoordinates(iX, LEVEL);
+      vec3 X = getCoordinates(iX, LEVEL, X0, R0);
       vec3 Xmin = X - R;
       vec3 Xmax = X + R;
       vec3 dX;
 			for (int d=0; d<3; d++) {
-				dX[d] = (C->X[d] > Xmax[d]) * (C->X[d] - Xmax[d]) + (C->X[d] < Xmin[d]) * (C->X[d] - Xmin[d]);
+				dX[d] = (C->x[d] > Xmax[d]) * (C->x[d] - Xmax[d]) + (C->x[d] < Xmin[d]) * (C->x[d] - Xmin[d]);
 			}
 			distance = std::min(distance, norm(dX));
     }
@@ -31,12 +32,16 @@ namespace exafmm_t {
   }
 
   //! Recursive call to pre-order tree traversal for selecting cells to send
-  void selectCells(Cell * Cj, int irank, Bodies & bodyBuffer, std::vector<int> & sendBodyCount,
-                   Cells & cellBuffer, std::vector<int> & sendCellCount) {
-    real_t R = getDistance(Cj, irank);
+  template <typename T>
+  void selectCells(Node<T>* Cj, int irank, Bodies<T>& bodyBuffer, std::vector<int> & sendBodyCount,
+                   Nodes<T>& cellBuffer, std::vector<int> & sendCellCount,
+                   std::vector<int>& OFFSET, int LEVEL, vec3 X0, real_t R0) {
+    real_t R = getDistance(Cj, irank, OFFSET, LEVEL, X0, R0);
+    real_t THETA = 0.5;
     real_t R2 = R * R * THETA * THETA;
     sendCellCount[irank]++;
     cellBuffer.push_back(*Cj);
+    /*
     if (R2 <= (Cj->R + Cj->R) * (Cj->R + Cj->R)) {
       if (Cj->numChilds == 0) {
         sendBodyCount[irank] += Cj->numBodies;
@@ -49,10 +54,18 @@ namespace exafmm_t {
         }
       }
     }
+    */
+
+    for (auto & child : Cj->children) {
+      selectCells(child, irank, bodyBuffer, sendBodyCount, cellBuffer, sendCellCount,
+                  OFFSET, LEVEL, X0, R0);
+    }
   }
 
-  void whatToSend(Cells & cells, Bodies & bodyBuffer, std::vector<int> & sendBodyCount,
-                  Cells & cellBuffer, std::vector<int> & sendCellCount) {
+  template <typename T>
+  void whatToSend(Nodes<T> & cells, Bodies<T> & bodyBuffer, std::vector<int> & sendBodyCount,
+                  Nodes<T> & cellBuffer, std::vector<int> & sendCellCount,
+                  std::vector<int>& OFFSET, int LEVEL, vec3 X0, real_t R0) {
 #if SEND_ALL //! Send everything (for debugging)
     for (int irank=0; irank<MPISIZE; irank++) {
       sendCellCount[irank] = cells.size();
@@ -68,11 +81,13 @@ namespace exafmm_t {
     }
 #else //! Send only necessary cells
     for (int irank=0; irank<MPISIZE; irank++) {
-      selectCells(&cells[0], irank, bodyBuffer, sendBodyCount, cellBuffer, sendCellCount);
+      selectCells(&cells[0], irank, bodyBuffer, sendBodyCount, cellBuffer, sendCellCount,
+                  OFFSET, LEVEL, X0, R0);
     }
 #endif
   }
 
+/*
   //! Reapply Ncrit recursively to account for bodies from other ranks
   void reapplyNcrit(BodyMap & bodyMap, CellMap & cellMap, uint64_t key) {
     bool noChildSent = true;
@@ -234,9 +249,11 @@ namespace exafmm_t {
     assert(bodies.size() == bodyMap.size());
     assert(cells.size() == cellMap.size());
   }
-
+*/
   //! MPI communication for local essential tree
-  void localEssentialTree(Bodies & bodies, Cells & cells) {
+  template <typename T>
+  void localEssentialTree(Bodies<T> & bodies, Nodes<T> & cells,
+                  std::vector<int>& OFFSET, int LEVEL, vec3 X0, real_t R0) {
     std::vector<int> sendBodyCount(MPISIZE, 0);
     std::vector<int> recvBodyCount(MPISIZE, 0);
     std::vector<int> sendBodyDispl(MPISIZE, 0);
@@ -245,19 +262,22 @@ namespace exafmm_t {
     std::vector<int> recvCellCount(MPISIZE, 0);
     std::vector<int> sendCellDispl(MPISIZE, 0);
     std::vector<int> recvCellDispl(MPISIZE, 0);
-    Bodies sendBodies, recvBodies;
-    Cells sendCells, recvCells;
+    Bodies<T> sendBodies, recvBodies;
+    Nodes<T> sendCells, recvCells;
     //! Decide which cells & bodies to send
-    whatToSend(cells, sendBodies, sendBodyCount, sendCells, sendCellCount);
+    whatToSend(cells, sendBodies, sendBodyCount, sendCells, sendCellCount,
+               OFFSET, LEVEL, X0, R0);
     //! Use alltoall to get recv count and calculate displacement (defined in alltoall.h)
     getCountAndDispl(sendBodyCount, sendBodyDispl, recvBodyCount, recvBodyDispl);
     getCountAndDispl(sendCellCount, sendCellDispl, recvCellCount, recvCellDispl);
     //! Alltoallv for cells (defined in alltoall.h)
     alltoallCells(sendCells, sendCellCount, sendCellDispl, recvCells, recvCellCount, recvCellDispl);
+/*
     //! Alltoallv for bodies (defined in alltoall.h)
     alltoallBodies(sendBodies, sendBodyCount, sendBodyDispl, recvBodies, recvBodyCount, recvBodyDispl);
     //! Build local essential tree
     buildLocalEssentialTree(recvBodies, recvCells, bodies, cells);
+*/
   }
 }
 #endif

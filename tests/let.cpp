@@ -1,6 +1,7 @@
 #include "build_tree.h"
 #include "dataset.h"
 #include "exafmm_t.h"
+#include "local_essential_tree.h"
 #include "partition.h"
 #include "test.h"
 
@@ -35,7 +36,9 @@ int main(int argc, char** argv) {
   Node<real_t>* root = nodes.data();
   fmm.P2M(leafs);
   fmm.M2M(root);
-
   print("root's monopole", root->up_equiv[0]);
+
+  // let
+  localEssentialTree(sources, nodes, src_offset, args.maxlevel, x0, r0);
   stopMPI();
 }

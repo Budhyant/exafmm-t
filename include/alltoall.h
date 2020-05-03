@@ -28,8 +28,7 @@ namespace exafmm_t {
   //! Alltoallv for cells
   template <typename T>
   void alltoallCells(Nodes<T>& sendCells, std::vector<int> & sendCellCount, std::vector<int> & sendCellDispl,
-                     Nodes<T>& recvCells, std::vector<int> & recvCellCount, std::vector<int> & recvCellDispl,
-                     FmmBase<T>& fmm) {
+                     Nodes<T>& recvCells, std::vector<int> & recvCellCount, std::vector<int> & recvCellDispl) {
     //! Copy cells to cell bases, cell data
     std::vector<NodeBase> sendCellBases(sendCellDispl[MPISIZE-1] + sendCellCount[MPISIZE-1]);
     size_t nsurf = sendCells[0].up_equiv.size();
@@ -58,7 +57,7 @@ namespace exafmm_t {
     MPI_Datatype MPI_CELL_DATA;
     MPI_Type_contiguous(sizeof(T)*nsurf, MPI_CHAR, &MPI_CELL_DATA);
     MPI_Type_commit(&MPI_CELL_DATA);
-    std::vector<complex_t> recvCellData(recvCellBases.size()*nsurf);
+    std::vector<T> recvCellData(recvCellBases.size()*nsurf);
     MPI_Alltoallv(&sendCellData[0], &sendCellCount[0], &sendCellDispl[0], MPI_CELL_DATA,
                   &recvCellData[0], &recvCellCount[0], &recvCellDispl[0], MPI_CELL_DATA, MPI_COMM_WORLD);
     //! Copy cell bases, cell data to cells
