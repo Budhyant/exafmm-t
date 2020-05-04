@@ -125,9 +125,7 @@ CONFIG_CLEAN_VPATH_FILES =
 @USE_MPI_TRUE@am__EXEEXT_1 = partition$(EXEEXT) let$(EXEEXT)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am__objects_1 =
-am_fmm_helmholtz_OBJECTS = fmm_helmholtz-fmm_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
+am_fmm_helmholtz_OBJECTS = fmm_helmholtz-fmm_helmholtz.$(OBJEXT)
 fmm_helmholtz_OBJECTS = $(am_fmm_helmholtz_OBJECTS)
 am__DEPENDENCIES_1 =
 am__DEPENDENCIES_2 = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
@@ -137,46 +135,39 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am__objects_2 = fmm_helmholtz_non_adaptive-fmm_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
-am_fmm_helmholtz_non_adaptive_OBJECTS = $(am__objects_2)
+am__objects_1 = fmm_helmholtz_non_adaptive-fmm_helmholtz.$(OBJEXT)
+am_fmm_helmholtz_non_adaptive_OBJECTS = $(am__objects_1)
 fmm_helmholtz_non_adaptive_OBJECTS =  \
 	$(am_fmm_helmholtz_non_adaptive_OBJECTS)
 am__DEPENDENCIES_3 = $(am__DEPENDENCIES_2)
 fmm_helmholtz_non_adaptive_DEPENDENCIES = $(am__DEPENDENCIES_3)
-am_fmm_laplace_OBJECTS = fmm_laplace-fmm_laplace.$(OBJEXT) \
-	$(am__objects_1)
+am_fmm_laplace_OBJECTS = fmm_laplace-fmm_laplace.$(OBJEXT)
 fmm_laplace_OBJECTS = $(am_fmm_laplace_OBJECTS)
 fmm_laplace_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am__objects_3 = fmm_laplace_non_adaptive-fmm_laplace.$(OBJEXT) \
-	$(am__objects_1)
-am_fmm_laplace_non_adaptive_OBJECTS = $(am__objects_3)
+am__objects_2 = fmm_laplace_non_adaptive-fmm_laplace.$(OBJEXT)
+am_fmm_laplace_non_adaptive_OBJECTS = $(am__objects_2)
 fmm_laplace_non_adaptive_OBJECTS =  \
 	$(am_fmm_laplace_non_adaptive_OBJECTS)
 fmm_laplace_non_adaptive_DEPENDENCIES = $(am__DEPENDENCIES_3)
 am_fmm_modified_helmholtz_OBJECTS =  \
-	fmm_modified_helmholtz-fmm_modified_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
+	fmm_modified_helmholtz-fmm_modified_helmholtz.$(OBJEXT)
 fmm_modified_helmholtz_OBJECTS = $(am_fmm_modified_helmholtz_OBJECTS)
 fmm_modified_helmholtz_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am__objects_4 = fmm_modified_helmholtz_non_adaptive-fmm_modified_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
-am_fmm_modified_helmholtz_non_adaptive_OBJECTS = $(am__objects_4)
+am__objects_3 = fmm_modified_helmholtz_non_adaptive-fmm_modified_helmholtz.$(OBJEXT)
+am_fmm_modified_helmholtz_non_adaptive_OBJECTS = $(am__objects_3)
 fmm_modified_helmholtz_non_adaptive_OBJECTS =  \
 	$(am_fmm_modified_helmholtz_non_adaptive_OBJECTS)
 fmm_modified_helmholtz_non_adaptive_DEPENDENCIES =  \
 	$(am__DEPENDENCIES_3)
 am_kernel_helmholtz_OBJECTS =  \
-	kernel_helmholtz-kernel_helmholtz.$(OBJEXT) $(am__objects_1)
+	kernel_helmholtz-kernel_helmholtz.$(OBJEXT)
 kernel_helmholtz_OBJECTS = $(am_kernel_helmholtz_OBJECTS)
 kernel_helmholtz_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_kernel_laplace_OBJECTS = kernel_laplace-kernel_laplace.$(OBJEXT) \
-	$(am__objects_1)
+am_kernel_laplace_OBJECTS = kernel_laplace-kernel_laplace.$(OBJEXT)
 kernel_laplace_OBJECTS = $(am_kernel_laplace_OBJECTS)
 kernel_laplace_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_kernel_modified_helmholtz_OBJECTS =  \
-	kernel_modified_helmholtz-kernel_modified_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
+	kernel_modified_helmholtz-kernel_modified_helmholtz.$(OBJEXT)
 kernel_modified_helmholtz_OBJECTS =  \
 	$(am_kernel_modified_helmholtz_OBJECTS)
 kernel_modified_helmholtz_DEPENDENCIES = $(am__DEPENDENCIES_2)
@@ -184,25 +175,21 @@ am__let_SOURCES_DIST = let.cpp
 @USE_MPI_TRUE@am_let_OBJECTS = let-let.$(OBJEXT)
 let_OBJECTS = $(am_let_OBJECTS)
 @USE_MPI_TRUE@let_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_list_OBJECTS = list-list.$(OBJEXT) $(am__objects_1)
+am_list_OBJECTS = list-list.$(OBJEXT)
 list_OBJECTS = $(am_list_OBJECTS)
 list_LDADD = $(LDADD)
-am_p2p_helmholtz_OBJECTS = p2p_helmholtz-p2p_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
+am_p2p_helmholtz_OBJECTS = p2p_helmholtz-p2p_helmholtz.$(OBJEXT)
 p2p_helmholtz_OBJECTS = $(am_p2p_helmholtz_OBJECTS)
 p2p_helmholtz_DEPENDENCIES = $(am__DEPENDENCIES_2)
-am_p2p_laplace_OBJECTS = p2p_laplace-p2p_laplace.$(OBJEXT) \
-	$(am__objects_1)
+am_p2p_laplace_OBJECTS = p2p_laplace-p2p_laplace.$(OBJEXT)
 p2p_laplace_OBJECTS = $(am_p2p_laplace_OBJECTS)
 p2p_laplace_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_p2p_modified_helmholtz_OBJECTS =  \
-	p2p_modified_helmholtz-p2p_modified_helmholtz.$(OBJEXT) \
-	$(am__objects_1)
+	p2p_modified_helmholtz-p2p_modified_helmholtz.$(OBJEXT)
 p2p_modified_helmholtz_OBJECTS = $(am_p2p_modified_helmholtz_OBJECTS)
 p2p_modified_helmholtz_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am__partition_SOURCES_DIST = partition.cpp
-@USE_MPI_TRUE@am_partition_OBJECTS = partition-partition.$(OBJEXT) \
-@USE_MPI_TRUE@	$(am__objects_1)
+@USE_MPI_TRUE@am_partition_OBJECTS = partition-partition.$(OBJEXT)
 partition_OBJECTS = $(am_partition_OBJECTS)
 @USE_MPI_TRUE@partition_DEPENDENCIES = $(am__DEPENDENCIES_2)
 am_tree_OBJECTS = tree-tree.$(OBJEXT)
@@ -637,8 +624,8 @@ top_srcdir = @top_srcdir@
 # automake preprocessor, compiler and linker flags
 
 # libraries
-AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/vectorclass \
-	$(FFTW_CPPFLAGS) # include user-defined path of fftw3.h
+AM_CPPFLAGS = -I$(top_srcdir)/include $(FFTW_CPPFLAGS) # include \
+	user-defined path of fftw3.h
 
 # OpenMP flags
 
@@ -652,43 +639,42 @@ AM_LDFLAGS = -lpthread -lm $(OPENMP_CXXFLAGS)
 # Single/Double precision
 @USE_FLOAT_TRUE@PRECISION = -DFLOAT
 LIBS_LDADD = $(BLAS_LIBS) $(LAPACK_LIBS) $(FFTW_LIBS)
-COMMON_SRCS = 
-p2p_laplace_SOURCES = p2p_laplace.cpp $(COMMON_SRCS)
+p2p_laplace_SOURCES = p2p_laplace.cpp
 p2p_laplace_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 p2p_laplace_LDADD = $(LIBS_LDADD)
-p2p_helmholtz_SOURCES = p2p_helmholtz.cpp $(COMMON_SRCS)
+p2p_helmholtz_SOURCES = p2p_helmholtz.cpp
 p2p_helmholtz_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 p2p_helmholtz_LDADD = $(LIBS_LDADD)
-p2p_modified_helmholtz_SOURCES = p2p_modified_helmholtz.cpp $(COMMON_SRCS)
+p2p_modified_helmholtz_SOURCES = p2p_modified_helmholtz.cpp
 p2p_modified_helmholtz_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 p2p_modified_helmholtz_LDADD = $(LIBS_LDADD)
-kernel_laplace_SOURCES = kernel_laplace.cpp $(COMMON_SRCS)
+kernel_laplace_SOURCES = kernel_laplace.cpp
 kernel_laplace_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 kernel_laplace_LDADD = $(LIBS_LDADD)
-kernel_helmholtz_SOURCES = kernel_helmholtz.cpp $(COMMON_SRCS)
+kernel_helmholtz_SOURCES = kernel_helmholtz.cpp
 kernel_helmholtz_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 kernel_helmholtz_LDADD = $(LIBS_LDADD)
-kernel_modified_helmholtz_SOURCES = kernel_modified_helmholtz.cpp $(COMMON_SRCS)
+kernel_modified_helmholtz_SOURCES = kernel_modified_helmholtz.cpp
 kernel_modified_helmholtz_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 kernel_modified_helmholtz_LDADD = $(LIBS_LDADD)
 tree_SOURCES = tree.cpp
 tree_CPPFLAGS = $(AM_CPPFLAGS)
 tree_LDADD = $(LIBS_LDADD)
-list_SOURCES = list.cpp $(COMMON_SRCS)
+list_SOURCES = list.cpp
 list_CPPFLAGS = $(AM_CPPFLAGS)
-fmm_laplace_SOURCES = fmm_laplace.cpp $(COMMON_SRCS)
+fmm_laplace_SOURCES = fmm_laplace.cpp
 fmm_laplace_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 fmm_laplace_LDADD = $(LIBS_LDADD)
 fmm_laplace_non_adaptive_SOURCES = $(fmm_laplace_SOURCES)
 fmm_laplace_non_adaptive_CPPFLAGS = -DNON_ADAPTIVE $(fmm_laplace_CPPFLAGS)
 fmm_laplace_non_adaptive_LDADD = $(fmm_laplace_LDADD)
-fmm_helmholtz_SOURCES = fmm_helmholtz.cpp $(COMMON_SRCS)
+fmm_helmholtz_SOURCES = fmm_helmholtz.cpp
 fmm_helmholtz_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 fmm_helmholtz_LDADD = $(LIBS_LDADD)
 fmm_helmholtz_non_adaptive_SOURCES = $(fmm_helmholtz_SOURCES)
 fmm_helmholtz_non_adaptive_CPPFLAGS = -DNON_ADAPTIVE $(fmm_helmholtz_CPPFLAGS)
 fmm_helmholtz_non_adaptive_LDADD = $(fmm_helmholtz_LDADD)
-fmm_modified_helmholtz_SOURCES = fmm_modified_helmholtz.cpp $(COMMON_SRCS)
+fmm_modified_helmholtz_SOURCES = fmm_modified_helmholtz.cpp
 fmm_modified_helmholtz_CPPFLAGS = $(PRECISION) $(AM_CPPFLAGS)
 fmm_modified_helmholtz_LDADD = $(LIBS_LDADD)
 fmm_modified_helmholtz_non_adaptive_SOURCES = $(fmm_modified_helmholtz_SOURCES)

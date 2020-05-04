@@ -3,10 +3,8 @@
 #include "exafmm_t.h"
 
 namespace exafmm_t {
-  //std::vector<std::vector<ivec3>> REL_COORD;
-  //std::vector<std::vector<int>> HASH_LUT;       // coord_hash -> index in rel_coord
-  //std::vector<std::vector<int>> M2L_INDEX_MAP;  // [M2L_relpos_idx][octant] -> M2L_Helper_relpos_idx
-  
+  // Global variables REL_COORD, HASH_LUT, M2L_INDEX_MAP are now defined in exafmm_t.h.
+
   /**
    * @brief Given a box, calculate the coordinates of surface points.
    *
@@ -20,7 +18,7 @@ namespace exafmm_t {
    * 
    * @return Vector of coordinates of surface points. 
    */
-  RealVec surface(int p, real_t r0, int level, real_t* c, real_t alpha) {
+  RealVec surface(int p, real_t r0, int level, real_t * c, real_t alpha) {
     int n = 6*(p-1)*(p-1) + 2;
     RealVec coord(n*3);
     coord[0] = -1.0;
@@ -74,7 +72,7 @@ namespace exafmm_t {
    *
    * @return Vector of coordinates of convolution grid.
    */
-  RealVec convolution_grid(int p, real_t r0, int level, real_t* c) {
+  RealVec convolution_grid(int p, real_t r0, int level, real_t * c) {
     real_t d = 2 * r0 * powf(0.5, level);
     real_t a = d * 1.05;  // side length of upward equivalent/downward check box
     int n1 = p * 2;
@@ -140,11 +138,10 @@ namespace exafmm_t {
    *
    * @param coord Coordinates that represent a relative position.
    *
-   * @return Hash value of the relative position.
+   * @return Hash value of the relative position (x + 10y + 100z + 555).
    */
   int hash(ivec3& coord) {
     const int n = 5;
-    // x + 10y + 100z + 555
     return ((coord[2]+n) * (2*n) + (coord[1]+n)) *(2*n) + (coord[0]+n);
   }
 

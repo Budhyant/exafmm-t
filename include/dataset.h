@@ -112,6 +112,9 @@ namespace exafmm_t {
       default:
         fprintf(stderr, "Unknown data distribution %s\n", distribution);
     }
+    for (int i=0; i<numBodies; ++i) {
+      bodies[i].ibody = i;
+    }
     return bodies;
   }
 

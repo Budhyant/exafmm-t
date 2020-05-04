@@ -1,8 +1,9 @@
 #ifndef build_tree_h
 #define build_tree_h
+#include <cassert>
 #include <fstream>
-#include <unordered_map>
 #include <queue>
+#include <unordered_map>
 #include "exafmm_t.h"
 #include "hilbert.h"
 #include "fmm_base.h"
@@ -71,9 +72,7 @@ namespace exafmm_t {
       int octant = (x[0] > X[0]) + ((x[1] > X[1]) << 1) + ((x[2] > X[2]) << 2);
       buffer[counter[octant]].X = bodies[i].X;
       buffer[counter[octant]].q = bodies[i].q;
-#if SORT_BACK
       buffer[counter[octant]].ibody = bodies[i].ibody;
-#endif
       counter[octant]++;
     }
   }
@@ -110,9 +109,11 @@ namespace exafmm_t {
         for (int i=source_begin; i<source_end; i++) {
           sources_buffer[i].X = sources[i].X;
           sources_buffer[i].q = sources[i].q;
+          sources_buffer[i].ibody = sources[i].ibody;
         }
         for (int i=target_begin; i<target_end; i++) {
           targets_buffer[i].X = targets[i].X;
+          targets_buffer[i].ibody = targets[i].ibody;
         }
       }
       // Copy sources and targets' coords and values to leaf (only during 2:1 tree balancing)
@@ -123,18 +124,14 @@ namespace exafmm_t {
           for (int d=0; d<3; ++d) {
             node->src_coord.push_back(B->X[d]);
           }
-#if SORT_BACK
           node->isrcs.push_back(B->ibody);
-#endif
           node->src_value.push_back(B->q);
         }
         for (Body<T>* B=first_target; B<first_target+node->ntrgs; ++B) {
           for (int d=0; d<3; ++d) {
             node->trg_coord.push_back(B->X[d]);
           }
-#if SORT_BACK
           node->itrgs.push_back(B->ibody);
-#endif
         }
       }
       return;

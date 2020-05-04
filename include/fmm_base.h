@@ -23,7 +23,9 @@ namespace exafmm_t {
     std::string filename;  //!< File name of the precomputation matrices
 
     FmmBase() {}
-    FmmBase(int p_, int ncrit_, int depth_) : p(p_), ncrit(ncrit_), depth(depth_) {
+    FmmBase(int p_, int ncrit_, int depth_, std::string filename_=std::string()) :
+      p(p_), ncrit(ncrit_), depth(depth_), filename(filename_)
+    {
       nsurf = 6*(p_-1)*(p_-1) + 2;
       int n1 = 2 * p_;
       nconv = n1 * n1 * n1;
@@ -156,15 +158,15 @@ namespace exafmm_t {
      * @param nodes Vector of all nodes.
      * @param leafs Vector of pointers to leaf nodes.
      */   
-    void upward_pass(Nodes<T>& nodes, NodePtrs<T>& leafs) {
+    void upward_pass(Nodes<T>& nodes, NodePtrs<T>& leafs, bool verbose=true) {
       start("P2M");
       P2M(leafs);
-      stop("P2M");
+      stop("P2M", verbose);
       start("M2M");
 #pragma omp parallel
 #pragma omp single nowait
       M2M(&nodes[0]);
-      stop("M2M");
+      stop("M2M", verbose);
     }
 
     /**
@@ -173,27 +175,27 @@ namespace exafmm_t {
      * @param nodes Vector of all nodes.
      * @param leafs Vector of pointers to leaf nodes.
      */   
-    void downward_pass(Nodes<T>& nodes, NodePtrs<T>& leafs) {
+    void downward_pass(Nodes<T>& nodes, NodePtrs<T>& leafs, bool verbose=true) {
       start("P2L");
       P2L(nodes);
-      stop("P2L");
+      stop("P2L", verbose);
       start("M2P");
       M2P(leafs);
-      stop("M2P");
+      stop("M2P", verbose);
       start("P2P");
       P2P(leafs);
-      stop("P2P");
+      stop("P2P", verbose);
       start("M2L");
       M2L(nodes);
-      stop("M2L");
+      stop("M2L", verbose);
       start("L2L");
 #pragma omp parallel
 #pragma omp single nowait
       L2L(&nodes[0]);
-      stop("L2L");
+      stop("L2L", verbose);
       start("L2P");
       L2P(leafs);
-      stop("L2P");
+      stop("L2P", verbose);
     }
 
     /**
@@ -202,14 +204,21 @@ namespace exafmm_t {
      * @param leafs Vector of leaves.
      * @return The relative error of potential and gradient in L2 norm.
      */
-    RealVec verify(NodePtrs<T>& leafs) {
-      int ntrgs = 10;
-      int stride = leafs.size() / ntrgs;
-      Nodes<T> targets;
-      for (int i=0; i<ntrgs; i++) {
-        targets.push_back(*(leafs[i*stride]));
+    RealVec verify(NodePtrs<T>& leafs, bool sample=false) {
+      Nodes<T> targets;  // vector of target nodes
+      if (sample) {
+        int nsamples = 10;
+        int stride = leafs.size() / nsamples;
+        for (int i=0; i<nsamples; i++) {
+          targets.push_back(*(leafs[i*stride]));
+        }
+      } else { // compute all values directly without sampling
+        for (size_t i=0; i<leafs.size(); i++) {
+          targets.push_back(*leafs[i]);
+        }
       }
-      Nodes<T> targets2 = targets;    // used for direct summation
+
+      Nodes<T> targets2 = targets;    // target2 is used for direct summation
 #pragma omp parallel for
       for (size_t i=0; i<targets2.size(); i++) {
         Node<T>* target = &targets2[i];
@@ -218,20 +227,40 @@ namespace exafmm_t {
           gradient_P2P(leafs[j]->src_coord, leafs[j]->src_value, target->trg_coord, target->trg_value);
         }
       }
-      real_t p_diff = 0, p_norm = 0, g_diff = 0, g_norm = 0;
+
+      // relative error in L-infinity norm
+      /*
+      double potential_max_err = -1;
+      double gradient_max_err = -1;
       for (size_t i=0; i<targets.size(); i++) {
-        if (targets2[i].ntrgs != 0) {  // if current leaf is not empty
-          p_norm += std::norm(targets2[i].trg_value[0]);
-          p_diff += std::norm(targets2[i].trg_value[0] - targets[i].trg_value[0]);
+        for (int j=0; j<targets[i].ntrgs; j++) {
+          auto potential_diff = std::abs(targets[i].trg_value[4*j+0] - targets2[i].trg_value[4*j+0]);
+          auto potential_norm = std::abs(targets2[i].trg_value[4*j+0]);
+          potential_max_err = std::max(potential_max_err, potential_diff/potential_norm);
           for (int d=1; d<4; d++) {
-            g_diff += std::norm(targets2[i].trg_value[d] - targets[i].trg_value[d]);
-            g_norm += std::norm(targets2[i].trg_value[d]);
+            auto gradient_diff = std::abs(targets[i].trg_value[4*j+d] - targets2[i].trg_value[4*j+d]);
+            auto gradient_norm = std::abs(targets2[i].trg_value[4*j+d]);
+            gradient_max_err = std::max(gradient_max_err, gradient_diff/gradient_norm);
+          }
+        }
+      }
+      */
+
+      // relative error in L2 norm
+      double p_diff = 0, p_norm = 0, g_diff = 0, g_norm = 0;
+      for (size_t i=0; i<targets.size(); i++) {
+        for (int j=0; j<targets[i].ntrgs; j++) {
+          p_norm += std::norm(targets2[i].trg_value[4*j+0]);
+          p_diff += std::norm(targets2[i].trg_value[4*j+0] - targets[i].trg_value[4*j+0]);
+          for (int d=1; d<4; d++) {
+            g_diff += std::norm(targets2[i].trg_value[4*j+d] - targets[i].trg_value[4*j+d]);
+            g_norm += std::norm(targets2[i].trg_value[4*j+d]);
           }
         }
       }
       RealVec err(2);
-      err[0] = sqrt(p_diff/p_norm);   // potential error
-      err[1] = sqrt(g_diff/g_norm);   // gradient error
+      err[0] = sqrt(p_diff/p_norm);   // potential error in L2 norm
+      err[1] = sqrt(g_diff/g_norm);   // gradient error in L2 norm
 
       return err;
     }

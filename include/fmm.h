@@ -23,7 +23,7 @@ namespace exafmm_t {
 
     /* constructors */
     Fmm() {}
-    Fmm(int p_, int ncrit_, int depth_) : FmmBase<T>(p_, ncrit_, depth_) {}
+    Fmm(int p_, int ncrit_, int depth_, std::string filename_=std::string()) : FmmBase<T>(p_, ncrit_, depth_, filename_) {}
 
     /* precomputation */
     //! Setup the sizes of precomputation matrices
@@ -115,7 +115,7 @@ namespace exafmm_t {
           file.read(reinterpret_cast<char*>(&r0_), sizeof(real_t));
           if (this->r0 == r0_) {    // if radius match
             size_t size = nsurf_ * nsurf_;
-            for (int l=0; l<depth_; l++) {
+            for (int l=0; l<=depth_; l++) {
               // UC2E, DC2E
               file.read(reinterpret_cast<char*>(&matrix_UC2E_U[l][0]), size*sizeof(T));
               file.read(reinterpret_cast<char*>(&matrix_UC2E_V[l][0]), size*sizeof(T));
