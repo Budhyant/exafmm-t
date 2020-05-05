@@ -58,6 +58,98 @@ namespace exafmm_t {
     }
   }
 
+  // bodies -> sources, add targets
+  template <typename T>
+  void partition(Bodies<T> & sources, Bodies<T> & targets,
+                 vec3 x0, real_t r0, std::vector<int>& OFFSET, int LEVEL) {
+    const int nsrcs = sources.size();
+    const int ntrgs = targets.size();
+    const int numBins = 1 << 3 * LEVEL;
+    std::vector<int> localHist(numBins, 0);
+    //! Get local histogram of hilbert key bins
+    std::vector<int> src_key(nsrcs);
+    std::vector<int> src_index(nsrcs);
+    for (int b=0; b<nsrcs; b++) {
+      ivec3 iX = get3DIndex(sources[b].X, LEVEL, x0, r0);
+      src_key[b] = getKey(iX, LEVEL, false);  // without level offset
+      src_index[b] = b;
+      localHist[src_key[b]]++;
+    }
+    //! Sort sources according to keys
+    std::vector<int> src_key2 = src_key;
+    radixsort(src_key, src_index, nsrcs);  // sort index based on key
+    Bodies<T> src_buffer = sources;
+    for (int b=0; b<nsrcs; b++) {
+      sources[b] = src_buffer[src_index[b]];
+      src_key[b] = src_key2[src_index[b]];
+    }
+
+    // Sort targets according to keys
+    std::vector<int> trg_key(ntrgs);
+    std::vector<int> trg_index(ntrgs);
+    for (int b=0; b<nsrcs; b++) {
+      ivec3 iX = get3DIndex(targets[b].X, LEVEL, x0, r0);
+      trg_key[b] = getKey(iX, LEVEL, false);  // without level offset
+      trg_index[b] = b;
+    }
+    std::vector<int> trg_key2 = trg_key;
+    radixsort(trg_key, trg_index, ntrgs);
+    Bodies<T> trg_buffer = targets;
+    for (int b=0; b<ntrgs; b++) {
+      targets[b] = trg_buffer[trg_index[b]];
+      trg_key[b] = trg_key2[trg_index[b]];
+    }
+
+    //! Get Global histogram of hilbert key bins
+    std::vector<int> globalHist(numBins);
+    MPI_Allreduce(&localHist[0], &globalHist[0], numBins, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    //! Calculate offset of global histogram for each rank
+    OFFSET.resize(MPISIZE+1);
+    OFFSET[0] = 0;
+    for (int i=0, irank=0, count=0; i<numBins; i++) {
+      count += globalHist[i];
+      if (irank * nsrcs < count) {
+        OFFSET[irank] = i;
+        irank++;
+      }
+    }
+    OFFSET[MPISIZE] = numBins;
+    std::vector<int> sendBodyCount(MPISIZE, 0);
+    std::vector<int> recvBodyCount(MPISIZE, 0);
+    std::vector<int> sendBodyDispl(MPISIZE, 0);
+    std::vector<int> recvBodyDispl(MPISIZE, 0);
+    //! Use the offset as the splitter for partitioning
+    for (int irank=0, b=0; irank<MPISIZE; irank++) {
+      while (b < int(sources.size()) && src_key[b] < OFFSET[irank+1]) {
+        sendBodyCount[irank]++;
+        b++;
+      }
+    }
+    //! Use alltoall to get recv count and calculate displacement from it
+    getCountAndDispl(sendBodyCount, sendBodyDispl, recvBodyCount, recvBodyDispl);
+    src_buffer.resize(recvBodyDispl[MPISIZE-1]+recvBodyCount[MPISIZE-1]);
+    //! Alltoallv for sources (defined in alltoall.h)
+    alltoallBodies(sources, sendBodyCount, sendBodyDispl, src_buffer, recvBodyCount, recvBodyDispl);
+    sources = src_buffer;
+
+    // alltoallv for targets
+    std::fill(sendBodyCount.begin(), sendBodyCount.end(), 0);
+    std::fill(recvBodyCount.begin(), recvBodyCount.end(), 0);
+    std::fill(sendBodyDispl.begin(), sendBodyDispl.end(), 0);
+    std::fill(recvBodyDispl.begin(), recvBodyDispl.end(), 0);
+    for (int irank=0, b=0; irank<MPISIZE; irank++) {
+      while (b < int(targets.size()) && trg_key[b] < OFFSET[irank+1]) {
+        sendBodyCount[irank]++;
+        b++;
+      }
+    }
+    getCountAndDispl(sendBodyCount, sendBodyDispl, recvBodyCount, recvBodyDispl);
+    trg_buffer.resize(recvBodyDispl[MPISIZE-1]+recvBodyCount[MPISIZE-1]);
+    alltoallBodies(targets, sendBodyCount, sendBodyDispl, trg_buffer, recvBodyCount, recvBodyDispl);
+    targets = trg_buffer;
+  }
+#if 0
   /**
    * @ brief Partition all bodies to different ranks based on their Hilbert keys. 
    *
@@ -121,6 +213,7 @@ namespace exafmm_t {
     alltoallBodies(bodies, sendBodyCount, sendBodyDispl, buffer, recvBodyCount, recvBodyDispl);
     bodies = buffer;
   }
+#endif
 /*
   //! Shift bodies among MPI rank round robin
   void shiftBodies(Bodies & bodies) {

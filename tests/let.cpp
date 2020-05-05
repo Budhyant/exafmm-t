@@ -19,10 +19,9 @@ int main(int argc, char** argv) {
   vec3 x0;
   real_t r0;
   allreduceBounds(sources, targets, x0, r0);
-  std::vector<int> trg_offset; 
-  std::vector<int> src_offset;
-  partition(sources, x0, r0, src_offset, args.maxlevel);
-  partition(targets, x0, r0, trg_offset, args.maxlevel);
+  std::vector<int> offset;   // based on the distribution of sources
+  partition(sources, targets, x0, r0, offset, args.maxlevel);
+  writeBodies(targets);
 
   // build tree
   DummyFmm<real_t> fmm(args.ncrit);
@@ -39,6 +38,6 @@ int main(int argc, char** argv) {
   print("root's monopole", root->up_equiv[0]);
 
   // let
-  localEssentialTree(sources, nodes, src_offset, args.maxlevel, x0, r0);
+  localEssentialTree(sources, nodes, offset, args.maxlevel, x0, r0);
   stopMPI();
 }

@@ -94,6 +94,7 @@ namespace exafmm_t {
     T q;                                   //!< Charge
     T p;                                   //!< Potential
     vec<3,T> F;                            //!< Gradient
+    uint64_t key;                          //!< Hilbert key
   };
   template <typename T> using Bodies = std::vector<Body<T>>;     //!< Vector of nodes
 
@@ -101,7 +102,7 @@ namespace exafmm_t {
   struct NodeBase {
     vec3 x;                                     //!< Coordinates of the center of the node
     real_t r;                                   //!< Radius of the node
-    uint64_t key;                               //!< Morton key
+    uint64_t key;                               //!< Hilbert key
     bool is_leaf;                               //!< Whether the node is leaf
     int nsrcs;                                  //!< Number of sources
   };
