@@ -84,6 +84,7 @@ namespace exafmm_t {
                   Node<T>* node, Nodes<T>& nodes, NodePtrs<T>& leafs, NodePtrs<T>& nonleafs,
                   const Keys& leafkeys, FmmBase<T>& fmm, bool direction=false) {
     //! Create a tree node
+    node->first_src = (direction ? sources_buffer : sources) + source_begin;
     node->idx = int(node-&nodes[0]);  // current node's index in nodes
     node->nsrcs = source_end - source_begin;
     node->ntrgs = target_end - target_begin;

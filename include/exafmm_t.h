@@ -124,7 +124,8 @@ namespace exafmm_t {
     //uint64_t key;                               //!< Morton key
     int level;                                  //!< Level in the octree
     int octant;                                 //!< Octant
-    Node* parent;                               //!< Pointer to parent
+    Node * parent;                               //!< Pointer to parent
+    Body<T> * first_src;                            //!< Pointer to first source
     std::vector<Node*> children;                //!< Vector of pointers to child nodes
     std::vector<Node*> colleagues;              //!< Vector of pointers to colleague nodes
     std::vector<Node*> P2L_list;                //!< Vector of pointers to nodes in P2L interaction list

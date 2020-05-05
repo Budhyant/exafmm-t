@@ -7,8 +7,8 @@
 #define SEND_ALL 0 //! Set to 1 for debugging
 
 namespace exafmm_t {
-  // typedef std::multimap<uint64_t, Body> BodyMap;
-  // typedef std::map<uint64_t, Cell> CellMap;
+  template <typename T> using BodyMap = std::multimap<uint64_t, Body<T>>;
+  template <typename T> using NodeMap = std::map<uint64_t, Node<T>>;
   // int LEVEL;                                    //!< Octree level used for partitioning
   // std::vector<int> OFFSET;                      //!< Offset of Hilbert index for partitions
 
@@ -41,25 +41,26 @@ namespace exafmm_t {
     real_t R2 = R * R * THETA * THETA;
     sendCellCount[irank]++;
     cellBuffer.push_back(*Cj);
-    /*
-    if (R2 <= (Cj->R + Cj->R) * (Cj->R + Cj->R)) {
-      if (Cj->numChilds == 0) {
-        sendBodyCount[irank] += Cj->numBodies;
-        for (int b=0; b<Cj->numBodies; b++) {
-          bodyBuffer.push_back(Cj->body[b]);
+
+    if (R2 <= (Cj->r + Cj->r) * (Cj->r + Cj->r)) {   // if near range
+      if (Cj->is_leaf) {
+        sendBodyCount[irank] += Cj->nsrcs;
+        for (int b=0; b<Cj->nsrcs; b++) {
+          bodyBuffer.push_back(Cj->first_src[b]);
         }
       } else {
-        for (Cell * Ci=Cj->child; Ci!=Cj->child+Cj->numChilds; Ci++) {
-          selectCells(Ci, irank, bodyBuffer, sendBodyCount, cellBuffer, sendCellCount);
+        for (auto & child : Cj->children) {
+          selectCells(child, irank, bodyBuffer, sendBodyCount, cellBuffer, sendCellCount,
+                      OFFSET, LEVEL, X0, R0);
         }
       }
     }
-    */
-
+/*
     for (auto & child : Cj->children) {
       selectCells(child, irank, bodyBuffer, sendBodyCount, cellBuffer, sendCellCount,
                   OFFSET, LEVEL, X0, R0);
     }
+*/
   }
 
   template <typename T>
@@ -70,10 +71,10 @@ namespace exafmm_t {
     for (int irank=0; irank<MPISIZE; irank++) {
       sendCellCount[irank] = cells.size();
       for (size_t i=0; i<cells.size(); i++) {
-        if (cells[i].numChilds == 0) {
-          sendBodyCount[irank] += cells[i].numBodies;
-          for (int b=0; b<cells[i].numBodies; b++) {
-            bodyBuffer.push_back(cells[i].body[b]);
+        if (cells[i].is_leaf) {
+          sendBodyCount[irank] += cells[i].nsrcs;
+          for (int b=0; b<cells[i].nsrcs; b++) {
+            bodyBuffer.push_back(cells[i].first_src[b]);
           }
         }
       }
@@ -89,7 +90,7 @@ namespace exafmm_t {
 
 /*
   //! Reapply Ncrit recursively to account for bodies from other ranks
-  void reapplyNcrit(BodyMap & bodyMap, CellMap & cellMap, uint64_t key) {
+  void reapplyNcrit(BodyMap & bodyMap, NodeMap & cellMap, uint64_t key) {
     bool noChildSent = true;
     for (int i=0; i<8; i++) {
       uint64_t childKey = getChild(key) + i;
@@ -158,7 +159,7 @@ namespace exafmm_t {
   }
 
   //! Check integrity of local essential tree
-  void sanityCheck(BodyMap & bodyMap, CellMap & cellMap, uint64_t key) {
+  void sanityCheck(BodyMap & bodyMap, NodeMap & cellMap, uint64_t key) {
     Cell cell = cellMap[key];
     assert(cell.key == key);
     if (cell.numChilds == 0) assert(cell.numBodies == int(bodyMap.count(key)));
@@ -184,7 +185,7 @@ namespace exafmm_t {
   }
 
   //! Build cells of LET recursively
-  void buildCells(BodyMap & bodyMap, CellMap & cellMap, uint64_t key, Bodies & bodies, Cell * cell, Cells & cells) {
+  void buildCells(BodyMap & bodyMap, NodeMap & cellMap, uint64_t key, Bodies & bodies, Cell * cell, Cells & cells) {
     *cell = cellMap[key];
     if (bodyMap.count(key) != 0) {
       std::pair<BodyMap::iterator,BodyMap::iterator> range = bodyMap.equal_range(key);
@@ -217,7 +218,7 @@ namespace exafmm_t {
   //! Build local essential tree
   void buildLocalEssentialTree(Bodies & recvBodies, Cells & recvCells, Bodies & bodies, Cells & cells) {
     BodyMap bodyMap;
-    CellMap cellMap;
+    NodeMap cellMap;
     //! Insert bodies to multimap
     for (size_t i=0; i<recvBodies.size(); i++) {
       bodyMap.insert(std::pair<uint64_t, Body>(recvBodies[i].key, recvBodies[i]));
@@ -272,9 +273,15 @@ namespace exafmm_t {
     getCountAndDispl(sendCellCount, sendCellDispl, recvCellCount, recvCellDispl);
     //! Alltoallv for cells (defined in alltoall.h)
     alltoallCells(sendCells, sendCellCount, sendCellDispl, recvCells, recvCellCount, recvCellDispl);
-/*
-    //! Alltoallv for bodies (defined in alltoall.h)
+    //! Alltoallv for sources (defined in alltoall.h)
     alltoallBodies(sendBodies, sendBodyCount, sendBodyDispl, recvBodies, recvBodyCount, recvBodyDispl);
+#if 0
+    if (MPIRANK==1) {
+      for (auto count : sendBodyCount)
+        std::cout << count << std::endl;
+    }
+#endif
+/*
     //! Build local essential tree
     buildLocalEssentialTree(recvBodies, recvCells, bodies, cells);
 */
