@@ -38,6 +38,6 @@ int main(int argc, char** argv) {
   print("root's monopole", root->up_equiv[0]);
 
   // let
-  localEssentialTree(sources, nodes, offset, args.maxlevel, x0, r0);
+  localEssentialTree(sources, nodes, offset, args.maxlevel, args.ncrit);
   stopMPI();
 }
