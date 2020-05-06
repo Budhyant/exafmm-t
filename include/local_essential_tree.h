@@ -161,38 +161,35 @@ namespace exafmm_t {
   }
 
   //! Check integrity of local essential tree
-/*
-  void sanityCheck(BodyMap & bodyMap, NodeMap & cellMap, uint64_t key) {
-    Cell cell = cellMap[key];
-    assert(cell.key == key);
-    if (cell.numChilds == 0) assert(cell.numBodies == int(bodyMap.count(key)));
+  template <typename T>
+  void sanityCheck(BodyMap<T> & bodyMap, NodeMap<T> & nodeMap, uint64_t key) {
+    Node<T> node = nodeMap[key];
+    assert(node.key == key);
+    if (node.is_leaf)
+      assert(node.nsrcs == int(bodyMap.count(key)));
     if (bodyMap.count(key) != 0) {
-      assert(cell.numChilds == 0);
-      std::pair<BodyMap::iterator,BodyMap::iterator> range = bodyMap.equal_range(key);
-      for (BodyMap::iterator B=range.first; B!=range.second; B++) {
+      assert(node.is_leaf);
+      auto range = bodyMap.equal_range(key);
+      for (auto B=range.first; B!=range.second; B++) {
         assert(B->second.key == key);
       }
     }
-    int numBodies = 0;
-    int numChilds = 0;
+    int nsrcs = 0;
     for (int i=0; i<8; i++) {
       uint64_t childKey = getChild(key) + i;
-      if (cellMap.find(childKey) != cellMap.end()) {
-        sanityCheck(bodyMap, cellMap, childKey);
-        numBodies += cellMap[childKey].numBodies;
-        numChilds++;
+      if (nodeMap.find(childKey) != nodeMap.end()) {
+        sanityCheck(bodyMap, nodeMap, childKey);
+        nsrcs += nodeMap[childKey].nsrcs;
       }
     }
-    assert((cell.numBodies == numBodies) || (numBodies == 0));
-    assert((cell.numChilds == numChilds));
+    assert((node.nsrcs == nsrcs) || (nsrcs == 0));
   }
-*/
 
   //! Build cells of LET recursively
 /*
   template <typename T>
-  void buildCells(BodyMap<T> & bodyMap, NodeMap<T> & cellMap, uint64_t key, Bodies<T> & bodies, Node<T> * cell, Nodes<T> & cells) {
-    *cell = cellMap[key];
+  void buildCells(BodyMap<T> & bodyMap, NodeMap<T> & nodeMap, uint64_t key, Bodies<T> & bodies, Node<T> * cell, Nodes<T> & cells) {
+    *cell = nodeMap[key];
     if (bodyMap.count(key) != 0) {
       std::pair<BodyMap::iterator,BodyMap::iterator> range = bodyMap.equal_range(key);
       bodies.resize(bodies.size()+cell->numBodies);
@@ -211,8 +208,8 @@ namespace exafmm_t {
       cell->child = child;
       for (int i=0, c=0; i<8; i++) {
         uint64_t childKey = getChild(key) + i;
-        if (cellMap.find(childKey) != cellMap.end()) {
-          buildCells(bodyMap, cellMap, childKey, bodies, &child[c++], cells);
+        if (nodeMap.find(childKey) != nodeMap.end()) {
+          buildCells(bodyMap, nodeMap, childKey, bodies, &child[c++], cells);
         }
       }
     } else {
@@ -248,14 +245,27 @@ namespace exafmm_t {
     //! Reapply Ncrit recursively to account for bodies from other ranks
     reapplyNcrit(bodyMap, nodeMap, 0, ncrit, nsurf, x0, r0);
 
-#if 1
+    //! Check integrity of local essential tree
+    sanityCheck(bodyMap, nodeMap, 0);
+#if 0
     std::cout << "rank " << MPIRANK
               << " , node map size: " << nodeMap.size() 
               << " , root nsrcs: " << nodeMap[0].nsrcs << std::endl;
+
+    int count = 0;
+    if (MPIRANK == 1) {
+      for (auto & n : nodeMap) {
+        Node<T> & node = n.second;
+        if (node.up_equiv[0] != 0) {
+          std::cout << count++ 
+                    << " is leaf: " << node.is_leaf
+                    << " nsrcs: "   << node.nsrcs
+                    << " key : " << node.key << std::endl; 
+        }
+      }
+    }
 #endif
 /*
-    //! Check integrity of local essential tree
-//    sanityCheck(bodyMap, nodeMap, 0);
     //! Copy bodyMap to bodies
     bodies.clear();
     bodies.reserve(bodyMap.size());
