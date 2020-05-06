@@ -83,6 +83,10 @@ namespace exafmm_t {
   }
 
   //! Reapply Ncrit recursively to account for bodies from other ranks
+  /* node.is_leaf, nsrcs
+   * new node: x, r, key, up_equiv
+   *
+   */
   template <typename T>
   void reapplyNcrit(BodyMap<T> & bodyMap, NodeMap<T> & nodeMap, uint64_t key,
                     int ncrit, int nsurf, vec3 x0, real_t r0) {
@@ -93,7 +97,6 @@ namespace exafmm_t {
       if (nodeMap.find(childKey) != nodeMap.end()) noChildSent = false;
     }
     if (nodeMap[key].nsrcs <= ncrit && noChildSent) {
-      // nodeMap[key].numChilds = 0;
       nodeMap[key].is_leaf = true;
       nodeMap[key].nsrcs = bodyMap.count(key);
       return;
@@ -103,11 +106,9 @@ namespace exafmm_t {
     nodeMap[key].is_leaf = false;
     int level = getLevel(key);
     std::vector<int> counter(8, 0);
-    // std::pair<BodyMap::iterator,BodyMap::iterator> range = bodyMap.equal_range(key);
     auto range = bodyMap.equal_range(key);
     Bodies<T> bodies(bodyMap.count(key));
     size_t b = 0;
-    // for (BodyMap<T>::iterator B=range.first; B!=range.second; B++, b++) {
     for (auto B=range.first; B!=range.second; B++, b++) {
       bodies[b] = B->second;
     }
@@ -124,11 +125,9 @@ namespace exafmm_t {
     //! Create a new cell if it didn't exist
     for (int i=0; i<8; i++) {
       uint64_t childKey = getChild(key) + i;
-    //  if (counter[i] != 0) {
       if (nodeMap.find(childKey) == nodeMap.end()) {
         Node<T> node;
         node.nsrcs = counter[i];
-        // node.numChilds = 0;
         ivec3 iX = get3DIndex(childKey);
         node.x = getCoordinates(iX, level+1, x0, r0);
         node.r = r0 / (1 << (level+1));
@@ -140,14 +139,12 @@ namespace exafmm_t {
         nodeMap[childKey].nsrcs += counter[i];
         nodeMap[childKey].up_equiv.resize(nsurf, 0);
       }
-    //}
       if (nodeMap.find(childKey) != nodeMap.end()) {
         reapplyNcrit(bodyMap, nodeMap, childKey, ncrit, nsurf, x0, r0);
       }
     }
-    //! Update number of bodies and child cells
+    //! Update number of sources
     int nsrcs = 0;
-    // int numChilds = 0;
     for (int i=0; i<8; i++) {
       uint64_t childKey = getChild(key) + i;
       if (nodeMap.find(childKey) != nodeMap.end()) {
@@ -168,7 +165,7 @@ namespace exafmm_t {
     if (node.is_leaf)
       assert(node.nsrcs == int(bodyMap.count(key)));
     if (bodyMap.count(key) != 0) {
-      assert(node.is_leaf);
+      assert(node.is_leaf);   // if bodyMap[key] not empty, key must be leaf
       auto range = bodyMap.equal_range(key);
       for (auto B=range.first; B!=range.second; B++) {
         assert(B->second.key == key);
@@ -186,38 +183,42 @@ namespace exafmm_t {
   }
 
   //! Build cells of LET recursively
-/*
   template <typename T>
-  void buildCells(BodyMap<T> & bodyMap, NodeMap<T> & nodeMap, uint64_t key, Bodies<T> & bodies, Node<T> * cell, Nodes<T> & cells) {
-    *cell = nodeMap[key];
-    if (bodyMap.count(key) != 0) {
-      std::pair<BodyMap::iterator,BodyMap::iterator> range = bodyMap.equal_range(key);
-      bodies.resize(bodies.size()+cell->numBodies);
-      Body * body = &bodies.back() - cell->numBodies + 1;
-      cell->body = body;
+  void buildCells(BodyMap<T> & bodyMap, NodeMap<T> & nodeMap, uint64_t key, Bodies<T> & bodies, Node<T> * node, Nodes<T> & nodes) {
+    *node = nodeMap[key];
+    node->idx = int(node-&nodes[0]);  // current node's index in nodes
+    node->level = getLevel(key);
+    if (bodyMap.count(key) != 0) {   // if node is leaf & has sources in it
+      auto range = bodyMap.equal_range(key);
+      bodies.resize(bodies.size()+node->nsrcs);
+      Body<T>* first_src = &bodies.back() - node->nsrcs + 1;
+      node->first_src = first_src;
       int b = 0;
-      for (BodyMap::iterator B=range.first; B!=range.second; B++, b++) {
-        body[b] = B->second;
+      for (auto B=range.first; B!=range.second; B++, b++) {
+        first_src[b] = B->second;
       }
     } else {
-      cell->body = NULL;
+      node->first_src = nullptr;
     }
-    if (cell->numChilds != 0) {
-      cells.resize(cells.size()+cell->numChilds);
-      Cell * child = &cells.back() - cell->numChilds + 1;
-      cell->child = child;
-      for (int i=0, c=0; i<8; i++) {
-        uint64_t childKey = getChild(key) + i;
-        if (nodeMap.find(childKey) != nodeMap.end()) {
-          buildCells(bodyMap, nodeMap, childKey, bodies, &child[c++], cells);
-        }
+    if (!node->is_leaf) {   // is node is not a leaf
+      nodes.resize(nodes.size()+NCHILD);  // add all 8 children
+      node->children.resize(8, nullptr);
+      Node<T> * child = &nodes.back() - NCHILD + 1;
+      for (int c=0; c<8; c++) {
+        uint64_t childKey = getChild(key) + c;
+        assert(nodeMap.find(childKey) != nodeMap.end());  // must have all 8 chilren in nodeMap
+        node->children[c] = &child[c];
+        child[c].parent = node;
+        buildCells(bodyMap, nodeMap, childKey, bodies, &child[c], nodes);
       }
-    } else {
-      cell->child = NULL;
     }
-    if (cell->numChilds != 0) cell->body = cell->child->body;
+    /*else {
+      node->child = nullptr;
+    }*/
+    //if (!node->is_leaf)
+    //  node->body = node->child->body;
   }
-*/
+
   //! Build local essential tree
   template <typename T>
   void buildLocalEssentialTree(Bodies<T> & recvBodies, Nodes<T> & recvCells,
@@ -265,18 +266,20 @@ namespace exafmm_t {
       }
     }
 #endif
-/*
+
     //! Copy bodyMap to bodies
     bodies.clear();
     bodies.reserve(bodyMap.size());
     //! Build cells of LET recursively
     nodes.reserve(nodeMap.size());
     nodes.resize(1);
+    nodes[0].parent = nullptr;
+
     buildCells(bodyMap, nodeMap, 0, bodies, &nodes[0], nodes);
     //! Check correspondence between vector and map sizes
     assert(bodies.size() == bodyMap.size());
     assert(nodes.size() == nodeMap.size());
-*/
+
   }
 
   //! MPI communication for local essential tree
