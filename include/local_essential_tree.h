@@ -245,7 +245,9 @@ namespace exafmm_t {
 
     //! Reapply Ncrit recursively to account for bodies from other ranks
     reapplyNcrit(bodyMap, nodeMap, 0, ncrit, nsurf, x0, r0);
-
+#if 0
+    std::cout << "mpirank: " << MPIRANK << " root nsrcs: " << nodeMap[0].nsrcs << std::endl; 
+#endif
     //! Check integrity of local essential tree
     sanityCheck(bodyMap, nodeMap, 0);
 #if 0
@@ -284,11 +286,11 @@ namespace exafmm_t {
 
   //! MPI communication for local essential tree
   template <typename T>
-  void localEssentialTree(Bodies<T> & bodies, Nodes<T> & cells,
+  void localEssentialTree(Bodies<T> & sources, Nodes<T> & nodes,
                   std::vector<int>& OFFSET, int LEVEL, int ncrit) {
-    vec3 x0 = cells[0].x;
-    real_t r0 = cells[0].r;
-    int nsurf = cells[0].up_equiv.size();
+    vec3 x0 = nodes[0].x;
+    real_t r0 = nodes[0].r;
+    int nsurf = nodes[0].up_equiv.size();
     std::vector<int> sendBodyCount(MPISIZE, 0);
     std::vector<int> recvBodyCount(MPISIZE, 0);
     std::vector<int> sendBodyDispl(MPISIZE, 0);
@@ -299,13 +301,13 @@ namespace exafmm_t {
     std::vector<int> recvCellDispl(MPISIZE, 0);
     Bodies<T> sendBodies, recvBodies;
     Nodes<T> sendCells, recvCells;
-    //! Decide which cells & bodies to send
-    whatToSend(cells, sendBodies, sendBodyCount, sendCells, sendCellCount,
+    //! Decide which nodes & bodies to send
+    whatToSend(nodes, sendBodies, sendBodyCount, sendCells, sendCellCount,
                OFFSET, LEVEL, x0, r0);
     //! Use alltoall to get recv count and calculate displacement (defined in alltoall.h)
     getCountAndDispl(sendBodyCount, sendBodyDispl, recvBodyCount, recvBodyDispl);
     getCountAndDispl(sendCellCount, sendCellDispl, recvCellCount, recvCellDispl);
-    //! Alltoallv for cells (defined in alltoall.h)
+    //! Alltoallv for nodes (defined in alltoall.h)
     alltoallCells(sendCells, sendCellCount, sendCellDispl, recvCells, recvCellCount, recvCellDispl);
     //! Alltoallv for sources (defined in alltoall.h)
     alltoallBodies(sendBodies, sendBodyCount, sendBodyDispl, recvBodies, recvBodyCount, recvBodyDispl);
@@ -317,8 +319,7 @@ namespace exafmm_t {
 #endif
 
     //! Build local essential tree
-    buildLocalEssentialTree(recvBodies, recvCells, bodies, cells, ncrit, nsurf, x0, r0);
-
+    buildLocalEssentialTree(recvBodies, recvCells, sources, nodes, ncrit, nsurf, x0, r0);
   }
 }
 #endif
